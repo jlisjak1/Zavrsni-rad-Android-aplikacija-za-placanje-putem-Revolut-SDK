@@ -40,6 +40,6 @@ class ItemsAdapter(
 
     override fun getItemCount(): Int = items.size
 
-    inner class ViewHolder(val binding: ItemShopBinding) : RecyclerView.ViewHolder(binding.root)
+    class ViewHolder(val binding: ItemShopBinding) : RecyclerView.ViewHolder(binding.root)
 
 }

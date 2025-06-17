@@ -21,12 +21,16 @@ import com.example.zavrsnirad.utils.DataEncryption
 import com.example.zavrsnirad.view.activities.MainActivity.Companion.cartList
 import com.example.zavrsnirad.viewmodel.GetOrderTokenViewModel
 import com.example.zavrsnirad.viewmodel.GetOrderTokenViewModelFactory
+import com.example.zavrsnirad.repository.TransactionRepository
+import com.example.zavrsnirad.viewmodel.TransactionViewModel
+import com.example.zavrsnirad.viewmodel.TransactionViewModelFactory
 import com.revolut.cardpayments.api.RevolutPaymentApi
 import com.revolut.cardpayments.core.api.AddressParams
 
 class ProductDetailsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityProductDetailsBinding
-    private lateinit var viewModel: GetOrderTokenViewModel
+    private lateinit var getOrderTokenViewModel: GetOrderTokenViewModel
+    private lateinit var transactionViewModel: TransactionViewModel
     private lateinit var databaseHelper: DatabaseHelper
     private var from = ""
     private var productModel: ProductModel? = null
@@ -45,9 +49,12 @@ class ProductDetailsActivity : AppCompatActivity() {
 
         databaseHelper = DatabaseHelper(this)
 
-        // Inicijalizacija ViewModela
-        val factory = GetOrderTokenViewModelFactory(databaseHelper)
-        viewModel = ViewModelProvider(this, factory)[GetOrderTokenViewModel::class.java]
+        val getOrderFactory = GetOrderTokenViewModelFactory(databaseHelper)
+        getOrderTokenViewModel = ViewModelProvider(this, getOrderFactory)[GetOrderTokenViewModel::class.java]
+
+        val transactionRepository = TransactionRepository(databaseHelper)
+        val transactionFactory = TransactionViewModelFactory(transactionRepository)
+        transactionViewModel = ViewModelProvider(this, transactionFactory)[TransactionViewModel::class.java]
 
         // Dohvacanje podataka od intenta
         if (intent.extras != null) {
@@ -94,24 +101,26 @@ class ProductDetailsActivity : AppCompatActivity() {
         }
 
         // Cekanje rezultata placanja i rukovanje sukladno rezultatu
-        viewModel.paymentResult.observe(this) { paymentResponse ->
+        getOrderTokenViewModel.paymentResult.observe(this) { paymentResponse ->
             encryptedOrderToken = ""
             paymentResponse?.let {
                 Log.d("Placanje", "Payment ID: ${it.id}, Token: ${it.token}")
                 encryptedOrderToken = DataEncryption.encryptData(it.token)
                 if (it.token != null) {
+                    val decryptedEmail = DataEncryption.decryptData(encryptedEmail)
+                    val decryptedAddress = DataEncryption.decryptData(encryptedDeliveryAddress)
                     // Pokretanje Revolut Payment Intenta
                     startActivityForResult(
                         RevolutPaymentApi.buildCardPaymentIntent(
                             context = this,
                             orderId = DataEncryption.decryptData(encryptedOrderToken),
                             RevolutPaymentApi.Configuration.CardPayment(
-                                email = "jlisjak@foi.unizg.hr",
+                                email = decryptedEmail,
                                 billingAddress = AddressParams(
-                                    streetLine1 = "Kriveljski put 9",
-                                    streetLine2 = "Ulica",
+                                    streetLine1 = decryptedAddress,
+                                    streetLine2 = null,
                                     city = "Zagreb",
-                                    region = "VZagrebačka županija",
+                                    region = null,
                                     country = "HR",
                                     postcode = "10040"
                                 ),
@@ -174,15 +183,15 @@ class ProductDetailsActivity : AppCompatActivity() {
 
             if (status.isNotEmpty()) {
                 val transactionModel = TransactionModel(
-                    name = DataEncryption.decryptData(encryptedName),
-                    email = DataEncryption.decryptData(encryptedEmail),
-                    phone = DataEncryption.decryptData(encryptedPhone),
-                    deliveryAddress = DataEncryption.decryptData(encryptedDeliveryAddress),
+                    name = encryptedName,
+                    email = encryptedEmail,
+                    phone = encryptedPhone,
+                    deliveryAddress = encryptedDeliveryAddress,
                     totalAmount = productModel?.price.toString(),
-                    orderToken = DataEncryption.decryptData(encryptedOrderToken),
+                    orderToken = encryptedOrderToken,
                     status = status
                 )
-                viewModel.insertTransaction(transactionModel)
+                transactionViewModel.insertTransaction(transactionModel)
             }
 
         } else {
@@ -221,7 +230,7 @@ class ProductDetailsActivity : AppCompatActivity() {
                 encryptedPhone = DataEncryption.encryptData(phone)
                 encryptedDeliveryAddress = DataEncryption.encryptData(deliveryAddress)
                 dialog.dismiss()
-                productModel?.price?.let { it1 -> viewModel.initiatePayment(it1) }
+                productModel?.price?.let { it1 -> getOrderTokenViewModel.initiatePayment(it1) }
             }
         }
 

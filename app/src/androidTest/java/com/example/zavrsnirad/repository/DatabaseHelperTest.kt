@@ -17,10 +17,8 @@ class DatabaseHelperTest {
 
     @Before
     fun setUp() {
-        // Koristimo kontekst aplikacije za testiranje
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         dbHelper = DatabaseHelper(context)
-        // cistimo bazu prije svakog testa
         dbHelper.clearAllHistory()
     }
 
@@ -30,8 +28,7 @@ class DatabaseHelperTest {
     }
 
     @Test
-    fun insert_and_retrieve_raw_transaction_verifies_encryption() {
-        // Priprema
+    fun umetanje_i_dohvat_sirove_transakcije_provjerava_enkripciju() {
         val originalName = "Ivan Horvat"
         val originalEmail = "ivan.horvat@example.com"
         val transaction = TransactionModel(
@@ -44,19 +41,15 @@ class DatabaseHelperTest {
             status = "Uspješno"
         )
 
-        // Akcija
         dbHelper.insertTransaction(transaction)
         val transactionsRaw = dbHelper.getAllTransactionsRaw()
 
-        // Provjera
         assertEquals(1, transactionsRaw.size)
         val retrievedRaw = transactionsRaw[0]
 
-        // Provjeravamo jesu li podaci u bazi razliciti od originala
         assertNotEquals(originalName, retrievedRaw.name)
         assertNotEquals(originalEmail, retrievedRaw.email)
 
-        // Provjeravamo možemo li dekriptirati podatke natrag u originalni oblik
         assertEquals(originalName, DataEncryption.decryptData(retrievedRaw.name))
         assertEquals(originalEmail, DataEncryption.decryptData(retrievedRaw.email))
     }

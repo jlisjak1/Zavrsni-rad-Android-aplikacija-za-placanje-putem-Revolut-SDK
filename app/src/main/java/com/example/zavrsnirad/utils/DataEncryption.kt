@@ -11,7 +11,7 @@ import javax.crypto.spec.GCMParameterSpec
 
 object DataEncryption {
 
-    private const val KEY_ALIAS = "my_secure_key_alias"
+    private const val KEY_ALIAS = "moj_kljuc"
 
     // Inicijalizacija Keystore-a i generiranje kljuca AES-a ako ga ne postoji
     private fun getKey(): SecretKey {
@@ -43,7 +43,7 @@ object DataEncryption {
         val iv = cipher.iv
         val encryptionResult = cipher.doFinal(data.toByteArray())
 
-        //Kombinacija IV-a i enkriptiranih podataka, zatim ga enkodiranje na Base64
+        //Kombinacija IV-a i enkriptiranih podataka, zatim ga enkodiramo na Base64
         val combined = ByteArray(iv.size + encryptionResult.size)
         System.arraycopy(iv, 0, combined, 0, iv.size)
         System.arraycopy(encryptionResult, 0, combined, iv.size, encryptionResult.size)
@@ -56,6 +56,11 @@ object DataEncryption {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
 
         val decodedData = Base64.decode(encryptedData, Base64.DEFAULT)
+
+        if (decodedData.size < 12) {
+            return "" // Vrati prazan string ako podaci ne sadrze IV
+        }
+
         val iv = decodedData.copyOfRange(0, 12) // Prvih 12 bajtova sadrze IV
         val encryptedBytes = decodedData.copyOfRange(12, decodedData.size)
 

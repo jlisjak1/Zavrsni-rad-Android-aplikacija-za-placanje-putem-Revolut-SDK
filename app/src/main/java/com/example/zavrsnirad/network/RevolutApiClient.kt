@@ -5,8 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RevolutApiClient {
-    private const val DEFAULT_BASE_URL = "https://sandbox-merchant.revolut.com/api/"
-    private var currentBaseUrl = DEFAULT_BASE_URL
+    private const val BASE_URL = "https://sandbox-merchant.revolut.com/api/"
 
     private val httpClient = OkHttpClient.Builder()
         .addInterceptor { chain ->
@@ -20,23 +19,9 @@ object RevolutApiClient {
         }
         .build()
 
-    // Uklanjamo lazy inicijalizaciju da bismo mogli dinamički mijenjati URL za testiranje
-    val instance: RevolutApiService
-        get() = buildRetrofitService(currentBaseUrl)
-
-    // Metoda za postavljanje baznog URL-a za testiranje
-    fun setBaseUrlForTesting(baseUrl: String) {
-        currentBaseUrl = baseUrl
-    }
-
-    // Metoda za resetiranje na defaultni URL nakon testiranja
-    fun resetBaseUrl() {
-        currentBaseUrl = DEFAULT_BASE_URL
-    }
-
-    private fun buildRetrofitService(baseUrl: String): RevolutApiService {
-        return Retrofit.Builder()
-            .baseUrl(baseUrl)
+    val instance: RevolutApiService by lazy {
+        Retrofit.Builder()
+            .baseUrl(BASE_URL)
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

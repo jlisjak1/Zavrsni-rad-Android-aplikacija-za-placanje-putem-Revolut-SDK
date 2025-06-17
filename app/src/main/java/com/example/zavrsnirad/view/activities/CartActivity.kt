@@ -22,13 +22,17 @@ import com.example.zavrsnirad.view.activities.MainActivity.Companion.cartList
 import com.example.zavrsnirad.view.adapter.ItemsAdapter
 import com.example.zavrsnirad.viewmodel.GetOrderTokenViewModel
 import com.example.zavrsnirad.viewmodel.GetOrderTokenViewModelFactory
+import com.example.zavrsnirad.repository.TransactionRepository
+import com.example.zavrsnirad.viewmodel.TransactionViewModel
+import com.example.zavrsnirad.viewmodel.TransactionViewModelFactory
 import com.revolut.cardpayments.api.RevolutPaymentApi
 import com.revolut.cardpayments.core.api.AddressParams
 
 class CartActivity : AppCompatActivity() {
     private lateinit var binding: ActivityCartBinding
     private lateinit var itemsAdapter: ItemsAdapter
-    private lateinit var viewModel: GetOrderTokenViewModel
+    private lateinit var getOrderTokenViewModel: GetOrderTokenViewModel
+    private lateinit var transactionViewModel: TransactionViewModel
     private lateinit var databaseHelper: DatabaseHelper
     private var totalAmount: Int = 0
     var encryptedName = ""
@@ -45,9 +49,12 @@ class CartActivity : AppCompatActivity() {
 
         databaseHelper = DatabaseHelper(this)
 
-        // Inicijalizacija ViewModela za upravljanje operacijama placanja
-        val factory = GetOrderTokenViewModelFactory(databaseHelper)
-        viewModel = ViewModelProvider(this, factory)[GetOrderTokenViewModel::class.java]
+        val getOrderFactory = GetOrderTokenViewModelFactory(databaseHelper)
+        getOrderTokenViewModel = ViewModelProvider(this, getOrderFactory)[GetOrderTokenViewModel::class.java]
+
+        val transactionRepository = TransactionRepository(databaseHelper)
+        val transactionFactory = TransactionViewModelFactory(transactionRepository)
+        transactionViewModel = ViewModelProvider(this, transactionFactory)[TransactionViewModel::class.java]
 
         // Klik na gumb "nazad" zatvara aktivnost
         binding.ivBack.setOnClickListener { finish() }
@@ -90,7 +97,7 @@ class CartActivity : AppCompatActivity() {
                 encryptedPhone = DataEncryption.encryptData(phone)
                 encryptedDeliveryAddress = DataEncryption.encryptData(deliveryAddress)
                 dialog.dismiss()
-                viewModel.initiatePayment(totalAmount)
+                getOrderTokenViewModel.initiatePayment(totalAmount)
             }
         }
 
@@ -158,24 +165,26 @@ class CartActivity : AppCompatActivity() {
 
     // Promatranje ViewModel-a za rezultat placanja i ažuriranje UI-a
     private fun observeViewModel() {
-        viewModel.paymentResult.observe(this) { paymentResponse ->
+        getOrderTokenViewModel.paymentResult.observe(this) { paymentResponse ->
             encryptedOrderToken = ""
             paymentResponse?.let {
                 Log.d("Placanje", "Payment ID: ${it.id}, Token: ${it.token}")
                 encryptedOrderToken = DataEncryption.encryptData(it.token)
                 if (it.token != null) {
+                    val decryptedEmail = DataEncryption.decryptData(encryptedEmail)
+                    val decryptedAddress = DataEncryption.decryptData(encryptedDeliveryAddress)
                     // Pokretanje Revolut Payment API-a ua placanje karticom
                     startActivityForResult(
                         RevolutPaymentApi.buildCardPaymentIntent(
                             context = this,
                             orderId = DataEncryption.decryptData(encryptedOrderToken),
                             RevolutPaymentApi.Configuration.CardPayment(
-                                email = "jlisjak@foi.unizg.hr",
+                                email = decryptedEmail,
                                 billingAddress = AddressParams(
-                                    streetLine1 = "Kriveljski put 9",
-                                    streetLine2 = "Ulica",
+                                    streetLine1 = decryptedAddress,
+                                    streetLine2 = null,
                                     city = "Zagreb",
-                                    region = "Zagrebačka županija",
+                                    region = null,
                                     country = "HR",
                                     postcode = "10040"
                                 ),
@@ -228,9 +237,9 @@ class CartActivity : AppCompatActivity() {
 
                 // Ako korisnik odbije placanje
                 is com.revolut.cardpayments.api.Result.Declined -> {
-                    status = "Payment Cancelled by User"
-                    Toast.makeText(this, "Korisnik odbio plaćanje", Toast.LENGTH_LONG).show()
-                    Log.d("Placanje", "Korisnik prekinuo placanje.")
+                    status = "Payment declined."
+                    Toast.makeText(this, "Plaćanje odbijeno", Toast.LENGTH_LONG).show()
+                    Log.d("Placanje", "Placanje odbijeno.")
                 }
 
                 // Ostali slucajevi
@@ -239,15 +248,15 @@ class CartActivity : AppCompatActivity() {
 
             if (status.isNotEmpty()){
                 val transactionModel = TransactionModel(
-                    name = DataEncryption.decryptData(encryptedName),
-                    email = DataEncryption.decryptData(encryptedEmail),
-                    phone = DataEncryption.decryptData(encryptedPhone),
-                    deliveryAddress = DataEncryption.decryptData(encryptedDeliveryAddress),
+                    name = encryptedName,
+                    email = encryptedEmail,
+                    phone = encryptedPhone,
+                    deliveryAddress = encryptedDeliveryAddress,
                     totalAmount = totalAmount.toString(),
-                    orderToken = DataEncryption.decryptData(encryptedOrderToken),
+                    orderToken = encryptedOrderToken,
                     status = status
                 )
-                viewModel.insertTransaction(transactionModel)
+                transactionViewModel.insertTransaction(transactionModel)
             }
 
         } else {

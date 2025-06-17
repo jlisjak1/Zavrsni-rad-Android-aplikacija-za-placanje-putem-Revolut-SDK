@@ -43,37 +43,42 @@ android {
 
 dependencies {
 
+    // Core & UI
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.retrofit)
-    implementation(libs.retrofit2.converter.gson)
-    implementation(libs.merchantcardform)
-    implementation(libs.play.services.basement)
-    implementation(libs.androidx.espresso.idling.resource)
-    //implementation(libs.androidx.runner)
-    androidTestImplementation(libs.androidx.runner)
+
+    // Lifecycle & ViewModel
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    //implementation(libs.androidx.espresso.contrib)
-    androidTestImplementation(libs.androidx.espresso.contrib)
 
-    testImplementation(libs.androidx.arch.core.testing)
-    androidTestImplementation(libs.androidx.espresso.contrib)
+    // Networking
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
 
+    // Revolut SDK
+    implementation(libs.revolut.merchantcardform)
 
+    // --- TESTIRANJE ---
 
+    // Unit Testing
+    testImplementation(libs.testing.junit4)
+    testImplementation(libs.testing.mockito.kotlin)
+    testImplementation(libs.testing.arch.core)
+    testImplementation(libs.testing.kotlinx.coroutines)
 
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    testImplementation(libs.mockito.kotlin)
+    // Instrumentation Testing
+    androidTestImplementation(libs.testing.androidx.junit)
+    androidTestImplementation(libs.testing.androidx.runner)
+    androidTestImplementation(libs.testing.androidx.rules)
+    androidTestImplementation(libs.testing.androidx.core)
+    androidTestImplementation(libs.testing.espresso.core)
+    androidTestImplementation(libs.testing.espresso.contrib)
+    androidTestImplementation(libs.testing.espresso.intents)
 
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.espresso.intents)
-    androidTestImplementation(libs.mockwebserver)
-
+    // Ne koristimo vise MockWebServer i UI Automator
+    // androidTestImplementation(libs.testing.mockwebserver)
+    // androidTestImplementation(libs.testing.uiautomator)
 }

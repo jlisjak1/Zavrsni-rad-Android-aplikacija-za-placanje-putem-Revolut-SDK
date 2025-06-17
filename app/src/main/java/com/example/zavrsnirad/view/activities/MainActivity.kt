@@ -51,6 +51,9 @@ class MainActivity : AppCompatActivity() {
         binding.ivCart.setOnClickListener {
             startActivity(Intent(this@MainActivity, CartActivity::class.java))
         }
+        binding.ivHistory.setOnClickListener {
+            startActivity(Intent(this, TransactionHistoryActivity::class.java))
+        }
     }
 
     // Konfigurancija RecyclerView-a sa adapterom i layout managerom

@@ -6,7 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.zavrsnirad.model.TransactionModel
 
-class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
+open class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     override fun onCreate(db: SQLiteDatabase) {
         val createTransactionTable = """
@@ -69,7 +69,7 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         return transactionList
     }
 
-    // Dodana metoda za čiscenje baze za potrebe testiranja
+    // Dodana metoda za ciscenje baze za potrebe testiranja
     fun clearAllHistory() {
         writableDatabase.use { db ->
             db.delete(TABLE_TRANSACTION, null, null)
