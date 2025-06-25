@@ -25,7 +25,7 @@ Projekt je izrađen prateći suvremene prakse razvoja za platformu Android, s na
 - **Korisničko sučelje:** Android XML Layouts & Material Design
 - **Asinkrone operacije:** Kotlin Coroutines
 - **Mrežni pozivi:** [Retrofit 2](https://square.github.io/retrofit/) & [OkHttp 3](https://square.github.io/okhttp/)
-- **Platni servis:** [Revolut Merchant Card Form SDK](https://developer.revolut.com/docs/accept-payments/android/merchant-card-form-sdk-for-android/introduction)
+- **Platni servis:** [Revolut Merchant Card Form SDK](https://developer.revolut.com/docs/sdks/merchant-android-sdk/introduction)
 - **Baza podataka:** [SQLite](https://developer.android.com/training/data-storage/sqlite)
 - **Testiranje:** JUnit 4, AndroidX Test (Espresso, Espresso Intents)
 
